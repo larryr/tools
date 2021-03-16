@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/larryr/goplantuml"
+	"github.com/larryr/tools/goplantuml"
 )
 
 //RenderingOptionSlice will implements the sort interface
