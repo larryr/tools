@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/larryr/tools/goplantuml"
+	"github.com/larryr/tools/gopuml"
 )
 
 //RenderingOptionSlice will implements the sort interface
-type RenderingOptionSlice []goplantuml.RenderingOption
+type RenderingOptionSlice []gopuml.RenderingOption
 
 // Len is the number of elements in the collection.
 func (as RenderingOptionSlice) Len() int {
@@ -48,19 +48,25 @@ func main() {
 	output := flag.String("output", "", "output file path. If omitted, then this will default to standard output")
 	showOptionsAsNote := flag.Bool("show-options-as-note", false, "Show a note in the diagram with the none evident options ran with this CLI")
 	aggregatePrivateMembers := flag.Bool("aggregate-private-members", false, "Show aggregations for private members. Ignored if -show-aggregations is not used.")
+	styleFlag := flag.String("style", "", "URL for style/skinparams include file")
+
 	flag.Parse()
-	renderingOptions := map[goplantuml.RenderingOption]interface{}{
-		goplantuml.RenderConnectionLabels:  *showConnectionLabels,
-		goplantuml.RenderFields:            !*hideFields,
-		goplantuml.RenderMethods:           !*hideMethods,
-		goplantuml.RenderAggregations:      *showAggregations,
-		goplantuml.RenderTitle:             *title,
-		goplantuml.AggregatePrivateMembers: *aggregatePrivateMembers,
+
+	style := manageStyle(styleFlag)
+
+	renderingOptions := map[gopuml.RenderingOption]interface{}{
+		gopuml.RenderConnectionLabels:  *showConnectionLabels,
+		gopuml.RenderFields:            !*hideFields,
+		gopuml.RenderMethods:           !*hideMethods,
+		gopuml.RenderAggregations:      *showAggregations,
+		gopuml.RenderTitle:             *title,
+		gopuml.AggregatePrivateMembers: *aggregatePrivateMembers,
+		gopuml.RenderStyle:             style,
 	}
 	if *hideConnections {
-		renderingOptions[goplantuml.RenderAliases] = *showAliases
-		renderingOptions[goplantuml.RenderCompositions] = *showCompositions
-		renderingOptions[goplantuml.RenderImplementations] = *showImplementations
+		renderingOptions[gopuml.RenderAliases] = *showAliases
+		renderingOptions[gopuml.RenderCompositions] = *showCompositions
+		renderingOptions[gopuml.RenderImplementations] = *showImplementations
 
 	}
 	noteList := []string{}
@@ -82,7 +88,7 @@ func main() {
 			noteList = append(noteList, trimmed)
 		}
 	}
-	renderingOptions[goplantuml.RenderNotes] = strings.Join(noteList, "\n")
+	renderingOptions[gopuml.RenderNotes] = strings.Join(noteList, "\n")
 	dirs, err := getDirectories()
 
 	if err != nil {
@@ -98,7 +104,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	result, err := goplantuml.NewClassDiagram(dirs, ignoredDirectories, *recursive)
+	result, err := gopuml.NewClassDiagram(dirs, ignoredDirectories, *recursive)
 	result.SetRenderingOptions(renderingOptions)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -158,7 +164,7 @@ func getIgnoredDirectories(list string) ([]string, error) {
 	return result, nil
 }
 
-func getLegend(ro map[goplantuml.RenderingOption]interface{}) (string, error) {
+func getLegend(ro map[gopuml.RenderingOption]interface{}) (string, error) {
 	result := "<u><b>Legend</b></u>\n"
 	orderedOptions := RenderingOptionSlice{}
 	for o := range ro {
@@ -168,21 +174,35 @@ func getLegend(ro map[goplantuml.RenderingOption]interface{}) (string, error) {
 	for _, option := range orderedOptions {
 		val := ro[option]
 		switch option {
-		case goplantuml.RenderAggregations:
+		case gopuml.RenderAggregations:
 			result = fmt.Sprintf("%sRender Aggregations: %t\n", result, val.(bool))
-		case goplantuml.RenderAliases:
+		case gopuml.RenderAliases:
 			result = fmt.Sprintf("%sRender Connections: %t\n", result, val.(bool))
-		case goplantuml.RenderCompositions:
+		case gopuml.RenderCompositions:
 			result = fmt.Sprintf("%sRender Compositions: %t\n", result, val.(bool))
-		case goplantuml.RenderFields:
+		case gopuml.RenderFields:
 			result = fmt.Sprintf("%sRender Fields: %t\n", result, val.(bool))
-		case goplantuml.RenderImplementations:
+		case gopuml.RenderImplementations:
 			result = fmt.Sprintf("%sRender Implementations: %t\n", result, val.(bool))
-		case goplantuml.RenderMethods:
+		case gopuml.RenderMethods:
 			result = fmt.Sprintf("%sRender Methods: %t\n", result, val.(bool))
-		case goplantuml.AggregatePrivateMembers:
+		case gopuml.AggregatePrivateMembers:
 			result = fmt.Sprintf("%sPritave Aggregations: %t\n", result, val.(bool))
 		}
 	}
 	return strings.TrimSpace(result), nil
+}
+
+const defaultStyleFlag = "https://raw.githubusercontent.com/larryr/UsePlantUML/master/style/class.puml"
+
+// check style flag for wellknown values
+func manageStyle(flag *string) string {
+
+	switch *flag {
+	case "default":
+		return defaultStyleFlag
+	case "none":
+		return ""
+	}
+	return *flag
 }

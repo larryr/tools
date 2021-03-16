@@ -1,5 +1,5 @@
 /*
-Package parser generates PlantUml http://plantuml.com/ Class diagrams for your golang projects
+package gopuml generates PlantUml http://plantuml.com/ Class diagrams for your golang projects
 The main structure is the ClassParser which you can generate by calling the NewClassDiagram(dir)
 function.
 
@@ -12,7 +12,7 @@ See github.com/jfeliu007/goplantuml/cmd/goplantuml/main.go for a command that us
 the console.
 
 */
-package parser
+package gopuml
 
 import (
 	"fmt"
@@ -60,6 +60,7 @@ type ClassDiagramOptions struct {
 
 //RenderingOptions will allow the class parser to optionally enebale or disable the things to render.
 type RenderingOptions struct {
+	Style                   string
 	Title                   string
 	Notes                   string
 	Aggregations            bool
@@ -103,6 +104,9 @@ const RenderNotes = 8
 
 //AggregatePrivateMembers is to be used in the SetRenderingOptions argument as the key to the map, when value is true, it will connect aggregations with private members
 const AggregatePrivateMembers = 9
+
+//RenderStyle is an option to specify an include url to pick up custom skinparams
+const RenderStyle = 10
 
 //RenderingOption is an alias for an it so it is easier to use it as options in a map (see SetRenderingOptions(map[RenderingOption]bool) error)
 type RenderingOption int
@@ -397,10 +401,18 @@ func getBasicType(theType ast.Expr) ast.Expr {
 //Render returns a string of the class diagram that this parser has generated.
 func (p *ClassParser) Render() string {
 	str := &LineStringBuilder{}
+
 	str.WriteLineWithDepth(0, "@startuml")
+
+	// render defaults style
+	if p.renderingOptions.Style != "" {
+		str.WriteLineWithDepth(0, fmt.Sprintf(`!includeurl %s`, p.renderingOptions.Style))
+	}
+
 	if p.renderingOptions.Title != "" {
 		str.WriteLineWithDepth(0, fmt.Sprintf(`title %s`, p.renderingOptions.Title))
 	}
+
 	if note := strings.TrimSpace(p.renderingOptions.Notes); note != "" {
 		str.WriteLineWithDepth(0, "legend")
 		str.WriteLineWithDepth(0, note)
@@ -715,6 +727,8 @@ func (p *ClassParser) SetRenderingOptions(ro map[RenderingOption]interface{}) er
 			p.renderingOptions.Notes = val.(string)
 		case AggregatePrivateMembers:
 			p.renderingOptions.AggregatePrivateMembers = val.(bool)
+		case RenderStyle:
+			p.renderingOptions.Style = val.(string)
 		default:
 			return fmt.Errorf("Invalid Rendering option %v", option)
 		}
