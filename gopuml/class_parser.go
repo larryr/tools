@@ -413,6 +413,9 @@ func (p *ClassParser) Render() string {
 		str.WriteLineWithDepth(0, fmt.Sprintf(`title %s`, p.renderingOptions.Title))
 	}
 
+	// should make this an option
+	str.WriteLineWithDepth(0, fmt.Sprintf("left to right direction"))
+
 	if note := strings.TrimSpace(p.renderingOptions.Notes); note != "" {
 		str.WriteLineWithDepth(0, "legend")
 		str.WriteLineWithDepth(0, note)
