@@ -78,7 +78,7 @@ func inform4(ifname string) error {
 	}
 
 	// Inform
-	ack, err := cli.Inform(nil)
+	ack, err := cli.Inform(nil, curIP)
 
 	log.Printf("inform ack:\n%v\n", ack)
 
