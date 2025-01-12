@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//xxgo:build go1.12 && (darwin || freebsd || linux || netbsd || openbsd || dragonfly)
-// xx+build go1.12
-// +xxbuild darwin freebsd linux netbsd openbsd dragonfly
+//go:build darwin || linux
+// +build darwin linux
 
 package nclient4
 
@@ -15,7 +14,6 @@ import (
 
 	"github.com/mdlayher/packet"
 	"github.com/u-root/uio/uio"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -39,7 +37,7 @@ func NewRawUDPConn(iface string, port int) (net.PacketConn, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawConn, err := packet.Listen(ifc, packet.Datagram, unix.ETH_P_IP, nil)
+	rawConn, err := packet.Listen(ifc, packet.Datagram, 0x0800, nil)
 	if err != nil {
 		return nil, err
 	}
