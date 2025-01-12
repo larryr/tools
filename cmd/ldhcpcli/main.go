@@ -9,7 +9,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
+	"github.com/larryr/tools/ldhcp/nclient4"
 )
 
 // program flags
