@@ -1,27 +1,15 @@
 package main
 
 import (
+	"embed"
 	"fmt"
-	"io"
-	"net/http"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-const (
-	// De-branded templates from this repo.
-	templateBase = "https://raw.githubusercontent.com/larryr/tools/main/cmd/prez/templates/"
-	// Static assets (JS/CSS) from the upstream present tool.
-	staticBase = "https://raw.githubusercontent.com/golang/tools/master/cmd/present/static/"
-)
-
-var templateFiles = []string{"action.tmpl", "slides.tmpl", "article.tmpl", "dir.tmpl"}
-
-var staticFiles = []string{
-	"styles.css", "dir.css", "article.css", "notes.css",
-	"slides.js", "dir.js", "notes.js", "play.js",
-	"playground.js", "jquery.js", "jquery-ui.js",
-}
+//go:embed templates static
+var content embed.FS
 
 const sampleSlide = `Title of Presentation
 Subtitle or tagline
@@ -50,26 +38,23 @@ Add more slides with the * prefix.
 `
 
 func initPresentation(dir string) error {
-	for _, d := range []string{"templates", "static"} {
-		if err := os.MkdirAll(filepath.Join(dir, d), 0755); err != nil {
+	err := fs.WalkDir(content, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || path == "." {
 			return err
 		}
-	}
-
-	fmt.Println("Fetching templates...")
-	for _, f := range templateFiles {
-		dest := filepath.Join(dir, "templates", f)
-		if err := download(templateBase+f, dest); err != nil {
-			return fmt.Errorf("template %s: %v", f, err)
+		dest := filepath.Join(dir, path)
+		if d.IsDir() {
+			return os.MkdirAll(dest, 0755)
 		}
-	}
-
-	fmt.Println("Fetching static assets...")
-	for _, f := range staticFiles {
-		dest := filepath.Join(dir, "static", f)
-		if err := download(staticBase+f, dest); err != nil {
-			return fmt.Errorf("static %s: %v", f, err)
+		data, err := content.ReadFile(path)
+		if err != nil {
+			return err
 		}
+		fmt.Println(" ", path)
+		return os.WriteFile(dest, data, 0644)
+	})
+	if err != nil {
+		return err
 	}
 
 	slidePath := filepath.Join(dir, "sample.slide")
@@ -81,22 +66,4 @@ func initPresentation(dir string) error {
 	fmt.Printf("  Edit %s then run:\n", slidePath)
 	fmt.Printf("  prez -base %s\n", dir)
 	return nil
-}
-
-func download(url, dest string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GET %s: %s", url, resp.Status)
-	}
-	f, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = io.Copy(f, resp.Body)
-	return err
 }
