@@ -96,10 +96,27 @@ func (p *Author) TextElem() (elems []Elem) {
 // Section represents a section of a document (such as a presentation slide)
 // comprising a title and a list of elements.
 type Section struct {
-	Number []int
-	Title  string
-	Elem   []Elem
-	Notes  []string
+	Number  []int
+	Title   string
+	Elem    []Elem
+	Notes   []string
+	Classes []string
+	Styles  []string
+}
+
+// HTMLAttributes returns the HTML class and style attributes for the section.
+func (s Section) HTMLAttributes() template.HTMLAttr {
+	if len(s.Classes) == 0 && len(s.Styles) == 0 {
+		return ""
+	}
+	var parts []string
+	if len(s.Classes) > 0 {
+		parts = append(parts, fmt.Sprintf(`class=%q`, strings.Join(s.Classes, " ")))
+	}
+	if len(s.Styles) > 0 {
+		parts = append(parts, fmt.Sprintf(`style=%q`, strings.Join(s.Styles, " ")))
+	}
+	return template.HTMLAttr(strings.Join(parts, " "))
 }
 
 func (s Section) Sections() (sections []Section) {
@@ -148,8 +165,16 @@ func renderElem(t *template.Template, e Elem) (template.HTML, error) {
 	return execTemplate(t, e.TemplateName(), data)
 }
 
+func pageNum(s Section, offset int) int {
+	if len(s.Number) == 0 {
+		return offset
+	}
+	return s.Number[0] + offset
+}
+
 func init() {
 	funcs["elem"] = renderElem
+	funcs["pagenum"] = pageNum
 }
 
 // execTemplate is a helper to execute a template and return the output as a

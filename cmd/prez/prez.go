@@ -24,6 +24,7 @@ var (
 	originHost   = flag.String("orighost", "", "host component of web origin URL (e.g., 'localhost')")
 	basePath     = flag.String("base", "", "base path for slide template and static resources")
 	nativeClient = flag.Bool("nacl", false, "use Native Client environment playground (prevents non-Go code execution)")
+	initFlag     = flag.Bool("init", false, "initialize a new presentation in the current directory (or path given as argument)")
 )
 
 func main() {
@@ -31,10 +32,21 @@ func main() {
 	flag.BoolVar(&present.NotesEnabled, "notes", false, "enable presenter notes (press 'N' from the browser to display them)")
 	flag.Parse()
 
+	if *initFlag {
+		dir := "."
+		if flag.NArg() > 0 {
+			dir = flag.Arg(0)
+		}
+		if err := initPresentation(dir); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	if *basePath == "" {
 		p, err := build.Default.Import(basePkg, "", build.FindOnly)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Couldn't find gopresent files: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Couldn't find presentation files: %v\n", err)
 			fmt.Fprintf(os.Stderr, basePathMessage, basePkg)
 			os.Exit(1)
 		}
@@ -90,19 +102,20 @@ func main() {
 }
 
 const basePathMessage = `
-By default, gopresent locates the slide template files and associated
+By default, prez locates the slide template files and associated
 static content by looking for a %q package
 in your Go workspaces (GOPATH).
 
-You may use the -base flag to specify an alternate location.
+You may use the -base flag to specify an alternate location,
+or run "prez -init" to set up a local presentation directory.
 `
 
 const localhostWarning = `
 WARNING!  WARNING!  WARNING!
 
-The present server appears to be listening on an address that is not localhost.
+The presentation server appears to be listening on an address that is not localhost.
 Anyone with access to this address and port will have access to this machine as
-the user running present.
+the user running prez.
 
 To avoid this message, listen on localhost or run with -play=false.
 
