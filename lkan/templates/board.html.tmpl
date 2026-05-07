@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{.Title}} – lkan</title>
+  <link rel="stylesheet" href="/static/kanban.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>{{.Title}}</h1>
+    <ul class="members" aria-label="team">
+      {{range .Members}}
+      <li class="member" title="{{.Name}}" style="background: {{if .Color}}{{.Color}}{{else}}#666{{end}}">{{.ID}}</li>
+      {{end}}
+    </ul>
+  </header>
+
+  <main class="board">
+    {{range .Columns}}
+    <section class="column" data-column="{{.ID}}">
+      <header class="column-head">
+        <h2>{{.Title}}</h2>
+        <span class="wip">{{len .Cards}}{{if .WIP}}/{{.WIP}}{{end}}</span>
+      </header>
+      <ul class="cards" data-column="{{.ID}}">
+        {{range .Cards}}
+        <li class="card" draggable="true" data-id="{{.ID}}">
+          <div class="title">{{.Title}}</div>
+          {{if .Labels}}
+          <div class="labels">
+            {{range .Labels}}<span class="pill" data-label="{{.}}">{{.}}</span>{{end}}
+          </div>
+          {{end}}
+          <div class="meta">
+            {{if .Assignees}}
+            <ul class="assignees">
+              {{range .Assignees}}<li class="chip" data-member="{{.}}" title="{{.}}">{{.}}</li>{{end}}
+            </ul>
+            {{end}}
+            {{with .Due}}<time class="due">{{.}}</time>{{end}}
+          </div>
+        </li>
+        {{end}}
+      </ul>
+      <button class="add-card" data-column="{{.ID}}">+ Add card</button>
+    </section>
+    {{end}}
+  </main>
+
+  <script id="palette" type="application/json">
+    {
+      "members": [
+        {{- range $i, $m := .Members -}}
+          {{- if $i}},{{end -}}
+          {"id": "{{$m.ID}}", "color": "{{$m.Color}}"}
+        {{- end -}}
+      ],
+      "labels": [
+        {{- range $i, $l := .Labels -}}
+          {{- if $i}},{{end -}}
+          {"name": "{{$l.Name}}", "color": "{{$l.Color}}"}
+        {{- end -}}
+      ]
+    }
+  </script>
+  <script src="/static/kanban.js"></script>
+</body>
+</html>
