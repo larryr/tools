@@ -3,9 +3,11 @@
 //
 // Usage:
 //
-//	lkan init               Create a starter board.yaml in the current dir.
-//	lkan serve              Start the web UI (default if no subcommand).
-//	lkan -f path -http addr Override file path and listen address.
+//	lkan init                          Create a starter board.yaml in the current dir.
+//	lkan serve                         Start the web UI (default if no subcommand).
+//	lkan usage                         Print the agent-facing guide to stdout.
+//	lkan usage --update-agents-md      Insert/replace the lkan block in ./AGENTS.md.
+//	lkan -f path -http addr            Override file path and listen address.
 package main
 
 import (
@@ -24,17 +26,20 @@ var (
 	httpAddr = flag.String("http", "127.0.0.1:8080", "HTTP listen address")
 )
 
-func usage() {
+func printUsage() {
 	fmt.Fprintf(os.Stderr, `usage: lkan [-f board.yaml] [-http 127.0.0.1:8080] <subcommand>
 
 subcommands:
   serve   start the web UI (default)
   init    write a starter board.yaml to -f path
+  usage   print the agent-facing guide to stdout
+          --update-agents-md [path]  insert/replace the lkan block in AGENTS.md
+                                     (default path: ./AGENTS.md)
 `)
 }
 
 func main() {
-	flag.Usage = usage
+	flag.Usage = printUsage
 	flag.Parse()
 
 	cmd := "serve"
@@ -52,10 +57,33 @@ func main() {
 		if err := serve(*file, *httpAddr); err != nil {
 			log.Fatal(err)
 		}
+	case "usage":
+		runUsage(flag.Args()[1:])
 	default:
-		usage()
+		printUsage()
 		os.Exit(2)
 	}
+}
+
+func runUsage(args []string) {
+	fs := flag.NewFlagSet("usage", flag.ExitOnError)
+	update := fs.Bool("update-agents-md", false, "insert/replace the lkan block in an AGENTS.md file")
+	if err := fs.Parse(args); err != nil {
+		log.Fatal(err)
+	}
+	if !*update {
+		fmt.Print(lkan.AgentGuide)
+		return
+	}
+	path := "AGENTS.md"
+	if fs.NArg() > 0 {
+		path = fs.Arg(0)
+	}
+	action, err := lkan.UpdateAgentsMD(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s %s\n", action, path)
 }
 
 func serve(path, addr string) error {
