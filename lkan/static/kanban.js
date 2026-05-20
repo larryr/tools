@@ -141,4 +141,9 @@
     ul.addEventListener("drop", onDrop);
   });
   document.querySelectorAll(".add-card").forEach(b => b.addEventListener("click", onAddCard));
+
+  if (document.body.dataset.liveReload === "true") {
+    const es = new EventSource("/events");
+    es.addEventListener("reload", () => location.reload());
+  }
 })();

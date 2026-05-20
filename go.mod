@@ -20,6 +20,7 @@ require (
 
 require (
 	github.com/dsnet/golib/memfile v1.0.0 // indirect
+	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect

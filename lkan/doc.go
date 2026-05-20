@@ -11,6 +11,18 @@ Flags:
 
     -f path       Path to board YAML file       (default: board.yaml)
     -http addr    HTTP listen address           (default: 127.0.0.1:8080)
+    -watch        Watch -f for changes and push reload events to open
+                  browser tabs over Server-Sent Events (serve only).
+                  Default off.
+
+Live reload
+-----------
+
+`lkan -watch serve` watches the directory containing board.yaml (so atomic-
+rename writes like `gh tops board > board.yaml` are detected) and pushes a
+reload event to every open browser tab when the file changes. Invalid YAML
+during a write is logged to stderr and ignored — the previous board stays
+loaded. Without -watch, none of this runs and behavior is unchanged.
 
 Adopting lkan in an existing repo
 ---------------------------------

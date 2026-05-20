@@ -7,7 +7,16 @@ import (
 )
 
 type handlers struct {
-	store *Store
+	store   *Store
+	watcher *Watcher // nil when --watch is not set; turns on /events and liveReload
+}
+
+// pageData wraps a Board with a flag the template uses to opt the page in to
+// the live-reload SSE stream. Board is embedded so existing template
+// expressions like {{.Title}} continue to resolve.
+type pageData struct {
+	*Board
+	LiveReload bool
 }
 
 func (h *handlers) index(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +26,7 @@ func (h *handlers) index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := boardTmpl.Execute(w, b); err != nil {
+	if err := boardTmpl.Execute(w, pageData{Board: b, LiveReload: h.watcher != nil}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
