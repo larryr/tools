@@ -30,6 +30,7 @@ func usage() {
 subcommands:
   serve   start the web UI (default)
   init    write a starter board.yaml to -f path
+  usage   print full adoption guide and board.yaml schema
 `)
 }
 
@@ -50,6 +51,10 @@ func main() {
 		fmt.Printf("wrote %s\n", *file)
 	case "serve":
 		if err := serve(*file, *httpAddr); err != nil {
+			log.Fatal(err)
+		}
+	case "usage":
+		if err := lkan.Usage(os.Stdout); err != nil {
 			log.Fatal(err)
 		}
 	default:
