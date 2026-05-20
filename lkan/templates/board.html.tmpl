@@ -5,7 +5,7 @@
   <title>{{.Title}} – lkan</title>
   <link rel="stylesheet" href="/static/kanban.css">
 </head>
-<body>
+<body{{if .LiveReload}} data-live-reload="true"{{end}}>
   <header class="topbar">
     <h1>{{.Title}}</h1>
     <ul class="members" aria-label="team">
