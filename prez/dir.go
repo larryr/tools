@@ -37,6 +37,14 @@ func dirHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	if isMarkdown(name) {
+		err := renderMarkdown(w, name)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), 500)
+		}
+		return
+	}
 	if isDir, err := dirList(w, name); err != nil {
 		addr, _, e := net.SplitHostPort(r.RemoteAddr)
 		if e != nil {
@@ -188,6 +196,7 @@ func showFile(n string) bool {
 	case ".pdf":
 	case ".html":
 	case ".go":
+	case ".md":
 	default:
 		return isDoc(n)
 	}
